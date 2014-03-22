@@ -13,12 +13,13 @@ package search
 
 import (
 	//"encoding/json"
-	. "github.com/araddon/gou"
+	"fmt"
+	"github.com/araddon/gou"
+	"github.com/bmizerany/assert"
 	"testing"
 )
 
 func TestFacetRegex(t *testing.T) {
-
 	// This is a possible solution for auto-complete
 	out, _ := Search("github").Size("0").Facet(
 		Facet().Regex("repository.name", "no.*").Size("8"),
@@ -28,9 +29,9 @@ func TestFacetRegex(t *testing.T) {
 		return
 	}
 	//Debug(string(out.Facets))
-	fh := NewJsonHelper([]byte(out.Facets))
+	fh := gou.NewJsonHelper([]byte(out.Facets))
 	facets := fh.Helpers("/repository.name/terms")
-	Assert(len(facets) == 8, t, "Should have 8? but was %v", len(facets))
+	assert.T(t, len(facets) == 8, fmt.Sprintf("Should have 8? but was %v", len(facets)))
 	// for _, f := range facets {
 	// 	Debug(f)
 	// }

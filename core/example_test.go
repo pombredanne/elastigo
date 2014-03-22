@@ -21,39 +21,39 @@ import (
 )
 
 // The simplest usage of background bulk indexing
-func ExampleBulkIndexor_simple() {
-	indexor := core.NewBulkIndexorErrors(10, 60)
+func ExampleBulkIndexer_simple() {
+	indexer := core.NewBulkIndexerErrors(10, 60)
 	done := make(chan bool)
-	indexor.Run(done)
+	indexer.Run(done)
 
-	indexor.Index("twitter", "user", "1", "", nil, `{"name":"bob"}`)
+	indexer.Index("twitter", "user", "1", "", nil, `{"name":"bob"}`)
 
 	<-done // wait forever
 }
 
 // The simplest usage of background bulk indexing with error channel
-func ExampleBulkIndexor_errorchannel() {
-	indexor := core.NewBulkIndexorErrors(10, 60)
+func ExampleBulkIndexer_errorchannel() {
+	indexer := core.NewBulkIndexerErrors(10, 60)
 	done := make(chan bool)
-	indexor.Run(done)
+	indexer.Run(done)
 
 	go func() {
-		for errBuf := range indexor.ErrorChannel {
+		for errBuf := range indexer.ErrorChannel {
 			// just blissfully print errors forever
 			fmt.Println(errBuf.Err)
 		}
 	}()
 	for i := 0; i < 20; i++ {
-		indexor.Index("twitter", "user", strconv.Itoa(i), "", nil, `{"name":"bob"}`)
+		indexer.Index("twitter", "user", strconv.Itoa(i), "", nil, `{"name":"bob"}`)
 	}
 	done <- true
 }
 
 // The simplest usage of background bulk indexing with error channel
-func ExampleBulkIndexor_errorsmarter() {
-	indexor := core.NewBulkIndexorErrors(10, 60)
+func ExampleBulkIndexer_errorsmarter() {
+	indexer := core.NewBulkIndexerErrors(10, 60)
 	done := make(chan bool)
-	indexor.Run(done)
+	indexer.Run(done)
 
 	errorCt := 0 // use sync.atomic or something if you need
 	timer := time.NewTicker(time.Minute * 3)
@@ -71,25 +71,25 @@ func ExampleBulkIndexor_errorsmarter() {
 	}()
 
 	go func() {
-		for errBuf := range indexor.ErrorChannel {
+		for errBuf := range indexer.ErrorChannel {
 			errorCt++
 			fmt.Println(errBuf.Err)
 			// log to disk?  db?   ????  Panic
 		}
 	}()
 	for i := 0; i < 20; i++ {
-		indexor.Index("twitter", "user", strconv.Itoa(i), "", nil, `{"name":"bob"}`)
+		indexer.Index("twitter", "user", strconv.Itoa(i), "", nil, `{"name":"bob"}`)
 	}
 	done <- true // send shutdown signal
 }
 
 // The inspecting the response
-func ExampleBulkIndexor_responses() {
-	indexor := core.NewBulkIndexor(10)
-	// Create a custom Sendor Func, to allow inspection of response/error
-	indexor.BulkSendor = func(buf *bytes.Buffer) error {
+func ExampleBulkIndexer_responses() {
+	indexer := core.NewBulkIndexer(10)
+	// Create a custom Sender Func, to allow inspection of response/error
+	indexer.BulkSender = func(buf *bytes.Buffer) error {
 		// @buf is the buffer of docs about to be written
-		respJson, err := api.DoCommand("POST", "/_bulk", buf)
+		respJson, err := api.DoCommand("POST", "/_bulk", nil, buf)
 		if err != nil {
 			// handle it better than this
 			fmt.Println(string(respJson))
@@ -97,10 +97,10 @@ func ExampleBulkIndexor_responses() {
 		return err
 	}
 	done := make(chan bool)
-	indexor.Run(done)
+	indexer.Run(done)
 
 	for i := 0; i < 20; i++ {
-		indexor.Index("twitter", "user", strconv.Itoa(i), "", nil, `{"name":"bob"}`)
+		indexer.Index("twitter", "user", strconv.Itoa(i), "", nil, `{"name":"bob"}`)
 	}
 	done <- true // send shutdown signal
 }

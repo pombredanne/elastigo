@@ -12,7 +12,9 @@
 package core
 
 import (
-	u "github.com/araddon/gou"
+	"encoding/json"
+	"fmt"
+	"github.com/bmizerany/assert"
 	"testing"
 )
 
@@ -22,9 +24,28 @@ func TestSearchRequest(t *testing.T) {
 			"wildcard": map[string]string{"actor": "a*"},
 		},
 	}
-	out, err := SearchRequest(true, "github", "", qry, "", 0)
+	out, err := SearchRequest("github", "", nil, qry)
 	//log.Println(out)
-	Assert(&out != nil && err == nil, t, "Should get docs")
-	Assert(out.Hits.Len() == 10, t, "Should have 10 docs but was %v", out.Hits.Len())
-	Assert(u.CloseInt(out.Hits.Total, 588), t, "Should have 588 hits but was %v", out.Hits.Total)
+	assert.T(t, &out != nil && err == nil, fmt.Sprintf("Should get docs"))
+	assert.T(t, out.Hits.Len() == 10, fmt.Sprintf("Should have 10 docs but was %v", out.Hits.Len()))
+	assert.T(t, CloseInt(out.Hits.Total, 588), fmt.Sprintf("Should have 588 hits but was %v", out.Hits.Total))
+}
+
+func TestSearchResultToJSON(t *testing.T) {
+	qry := map[string]interface{}{
+		"query": map[string]interface{}{
+			"wildcard": map[string]string{"actor": "a*"},
+		},
+	}
+	out, err := SearchRequest(true, "github", "", qry, "", 0)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, err = json.Marshal(out.Hits.Hits)
+
+	if err != nil {
+		t.Error(err)
+	}
 }
